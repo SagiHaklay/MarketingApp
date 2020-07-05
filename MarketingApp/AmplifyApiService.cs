@@ -1,6 +1,7 @@
 ﻿using MarketingApp.Models;
 using Newtonsoft.Json;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
@@ -15,14 +16,14 @@ namespace MarketingApp
         private const string BASE_URI = "https://api.outbrain.com/amplify/v0.1/";
         private const string MOCK_URI = "https://private-anon-18e4f51dfd-amplifyv01.apiary-mock.com";
         private HttpClient _httpClient;
-        private CampaignCollection _campaigns;
+        private IEnumerable<Campaign> _campaigns;
 
         public AmplifyApiService()
         {
             var baseAddress = new Uri(BASE_URI);
             _httpClient = new HttpClient { BaseAddress = baseAddress };
             _httpClient.DefaultRequestHeaders.TryAddWithoutValidation("ob-token-v1", TOKEN);
-            _campaigns = null;
+            _campaigns = new List<Campaign>();
         }
 
         public Campaign GetCampaignById(string id)
@@ -31,7 +32,7 @@ namespace MarketingApp
             {
                 try
                 {
-                    return _campaigns.Campaigns.First((campaign) => {
+                    return _campaigns.First((campaign) => {
                         return campaign.Id == id;
                     });
                 }
@@ -52,7 +53,7 @@ namespace MarketingApp
             {
                 try
                 {
-                    return _campaigns.Campaigns.Where((campaign) =>
+                    return _campaigns.Where((campaign) =>
                     {
                         var creationTime = DateTime.Parse(campaign.CreationTime);
                         return DateTime.Now.Subtract(creationTime).Days <= 365;
@@ -75,7 +76,7 @@ namespace MarketingApp
             {
                 try
                 {
-                    return _campaigns.Campaigns.Where((campaign) =>
+                    return _campaigns.Where((campaign) =>
                     {
                         return campaign.LiveStatus.AmountSpent > amountSpent;
                     }).ToList();
@@ -103,16 +104,27 @@ namespace MarketingApp
 
         public async Task GetCampaignsByMarketer(string id)
         {
-            string json = await _httpClient.GetStringAsync($"marketers/{id}/campaigns?includeArchived=true&extraFields=BidBySections");
+            CampaignCollection campaignCollection;
+            string json = await _httpClient.GetStringAsync($"marketers/{id}/campaigns?includeArchived=true&extraFields=BidBySections&limit=50");
             try
             {
-                _campaigns = JsonConvert.DeserializeObject<CampaignCollection>(json);
+                campaignCollection = JsonConvert.DeserializeObject<CampaignCollection>(json);
+                _campaigns = _campaigns.Concat(campaignCollection.Campaigns);
+                int offset = 50;
+                // API limits number of campaign given in arequest to 50.
+                while (offset < campaignCollection.TotalCount)
+                {
+                    json = await _httpClient.GetStringAsync($"marketers/{id}/campaigns?includeArchived=true&extraFields=BidBySections&limit=50&offset={offset}");
+                    campaignCollection = JsonConvert.DeserializeObject<CampaignCollection>(json);
+                    _campaigns = _campaigns.Concat(campaignCollection.Campaigns);
+                    offset += 50;
+                }
             }
             catch (Exception ex)
             {
-                _campaigns = null;
                 Console.WriteLine(ex.Message);
             }
+            
         }
     }
 }

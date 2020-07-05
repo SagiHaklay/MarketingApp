@@ -11,11 +11,13 @@ namespace MarketingApp
             try
             {
                 var api = new AmplifyApiService();
+                var csvWriter = new CsvWriter("C:/projects/MarketingApp/MarketingApp/file.csv");
                 Task.Run(async () => {
                     await api.GetCampaignsByMarketer("0004f6d7c482ee7b6c5b5d40dc6823c5c5");
                     var campaign = api.GetCampaignById("00260216138447a76be5e8f50b3701920f");
                     PrintCampaign(campaign);
                     var lastYear = api.GetCampaignsFromLastYear();
+                    csvWriter.WriteCampaigns(lastYear);
                 });
             }
             catch (Exception ex)

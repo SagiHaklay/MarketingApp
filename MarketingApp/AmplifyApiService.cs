@@ -69,6 +69,28 @@ namespace MarketingApp
             }
         }
 
+        public IEnumerable<Campaign> GetCampaignAboveAmountSpent(float amountSpent)
+        {
+            if (_campaigns != null)
+            {
+                try
+                {
+                    return _campaigns.Campaigns.Where((campaign) =>
+                    {
+                        return campaign.LiveStatus.AmountSpent > amountSpent;
+                    }).ToList();
+                }
+                catch (Exception)
+                {
+                    return null;
+                }
+            }
+            else
+            {
+                return null;
+            }
+        }
+
         public Campaign GetCampaignById()
         {
             return GetCampaignById("c175ad51c42f2a7713e53dce5a12bc0088");

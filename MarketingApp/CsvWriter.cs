@@ -9,7 +9,7 @@ namespace MarketingApp
 {
     public class CsvWriter
     {
-        private StreamWriter _writer;
+        //private StreamWriter _writer;
         private string _fileName;
         public CsvWriter(string fileName)
         {

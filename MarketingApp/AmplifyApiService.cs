@@ -91,6 +91,11 @@ namespace MarketingApp
             }
         }
 
+        public IEnumerable<Campaign> GetCampaignAboveAmountSpent()
+        {
+            return GetCampaignAboveAmountSpent(10);
+        }
+
         public Campaign GetCampaignById()
         {
             return GetCampaignById("c175ad51c42f2a7713e53dce5a12bc0088");
